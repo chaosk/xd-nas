@@ -1,11 +1,10 @@
 services:
   authentik:
-    image: ghcr.io/goauthentik/server:2025.8
+    image: ghcr.io/goauthentik/server:2025.10
     container_name: authentik
     command: server
     environment:
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
-      - AUTHENTIK_REDIS__HOST=redis
       - AUTHENTIK_POSTGRESQL__HOST=db
       - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER}
       - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB}
@@ -37,18 +36,16 @@ services:
       - "traefik.http.services.authentik-svc.loadbalancer.server.port=9000"
     depends_on:
       - db
-      - redis
     networks:
       - synobridge
       - traefik
       - default
     restart: unless-stopped
   worker:
-    image: ghcr.io/goauthentik/server:2025.8
+    image: ghcr.io/goauthentik/server:2025.10
     command: worker
     environment:
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
-      - AUTHENTIK_REDIS__HOST=redis
       - AUTHENTIK_POSTGRESQL__HOST=db
       - AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER}
       - AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB}
@@ -67,7 +64,6 @@ services:
       - /defaults.env
     depends_on:
       - db
-      - redis
     restart: unless-stopped
   db:
     image: docker.io/library/postgres:15
@@ -84,18 +80,6 @@ services:
       - POSTGRES_PASSWORD=${AUTHENTIK_DB_PASS}
       - POSTGRES_USER=${AUTHENTIK_DB_USER}
       - POSTGRES_DB=${AUTHENTIK_DB}
-  redis:
-    image: docker.io/library/redis:latest
-    command: --save 60 1 --loglevel warning
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
-      start_period: 20s
-      interval: 30s
-      retries: 5
-      timeout: 3s
-    volumes:
-      - redisdata:/data
-    restart: unless-stopped
   geoip:
     image: maxmindinc/geoipupdate:latest
     volumes:
@@ -107,7 +91,6 @@ services:
       - GEOIPUPDATE_LICENSE_KEY=${GEOIPUPDATE_LICENSE_KEY}
 volumes:
   pgdata:
-  redisdata:
 networks:
   synobridge:
     external: true
