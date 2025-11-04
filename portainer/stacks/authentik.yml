@@ -1,6 +1,6 @@
 services:
   authentik:
-    image: ghcr.io/goauthentik/server:2025.6
+    image: ghcr.io/goauthentik/server:2025.8
     container_name: authentik
     command: server
     environment:
@@ -44,7 +44,7 @@ services:
       - default
     restart: unless-stopped
   worker:
-    image: ghcr.io/goauthentik/server:2025.6
+    image: ghcr.io/goauthentik/server:2025.8
     command: worker
     environment:
       - AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY}
