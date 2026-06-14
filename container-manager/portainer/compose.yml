@@ -20,7 +20,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.portainer.entrypoints=websecure"
       - "traefik.http.routers.portainer.tls=true"
-      - "traefik.http.routers.portainer.rule=Host(`portainer.pantry.orchard.loc.ecksdee.tech`)"
+      - "traefik.http.routers.portainer.rule=Host(`portainer.nas.net.ecksd.ee`)"
       - "traefik.http.services.portainer-portainer.loadbalancer.server.port=9000"
     volumes:
       - ./defaults.env:/defaults.env
