@@ -1,0 +1,57 @@
+services:
+  garage:
+    image: dxflrs/garage:v2.3.0
+    container_name: garage
+    restart: unless-stopped
+    command: ["/garage", "server", "--single-node"]
+    env_file:
+      - /defaults.env
+    environment:
+      GARAGE_RPC_SECRET: ${GARAGE_RPC_SECRET}
+      GARAGE_ADMIN_TOKEN: ${GARAGE_ADMIN_TOKEN}
+      GARAGE_METRICS_TOKEN: ${GARAGE_METRICS_TOKEN:-}
+    networks:
+      traefik: {}
+    configs:
+      - source: garage_toml
+        target: /etc/garage.toml
+    volumes:
+      - ${DATA_DIR}/garage/meta:/var/lib/garage/meta
+      - ${GARAGE_DATA_DIR}:/var/lib/garage/data
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.garage-s3.entrypoints=websecure"
+      - "traefik.http.routers.garage-s3.rule=Host(`s3.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.garage-s3.tls=true"
+      - "traefik.http.routers.garage-s3.service=garage-s3"
+      - "traefik.http.services.garage-s3.loadbalancer.server.port=3900"
+      - "traefik.http.routers.garage-admin.entrypoints=websecure"
+      - "traefik.http.routers.garage-admin.rule=Host(`garage.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.garage-admin.tls=true"
+      - "traefik.http.routers.garage-admin.middlewares=chain-forwardauth@docker"
+      - "traefik.http.routers.garage-admin.service=garage-admin"
+      - "traefik.http.services.garage-admin.loadbalancer.server.port=3903"
+configs:
+  garage_toml:
+    content: |
+      metadata_dir = "/var/lib/garage/meta"
+      data_dir = "/var/lib/garage/data"
+      db_engine = "sqlite"
+      metadata_auto_snapshot_interval = "6h"
+
+      replication_factor = 1
+
+      rpc_bind_addr = "[::]:3901"
+      rpc_public_addr = "127.0.0.1:3901"
+
+      [s3_api]
+      s3_region = "garage"
+      api_bind_addr = "[::]:3900"
+      root_domain = ".s3.nas.net.ecksd.ee"
+
+      [admin]
+      api_bind_addr = "[::]:3903"
+networks:
+  traefik:
+    external: true
