@@ -27,11 +27,34 @@ services:
       - "traefik.http.routers.garage-s3.service=garage-s3"
       - "traefik.http.services.garage-s3.loadbalancer.server.port=3900"
       - "traefik.http.routers.garage-admin.entrypoints=websecure"
-      - "traefik.http.routers.garage-admin.rule=Host(`garage.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.garage-admin.rule=Host(`s3-admin.${DOMAIN_NAME}`)"
       - "traefik.http.routers.garage-admin.tls=true"
-      - "traefik.http.routers.garage-admin.middlewares=chain-forwardauth@docker"
       - "traefik.http.routers.garage-admin.service=garage-admin"
       - "traefik.http.services.garage-admin.loadbalancer.server.port=3903"
+  webui:
+    image: khairul169/garage-webui:1.1.0
+    container_name: garage-webui
+    restart: unless-stopped
+    depends_on:
+      - garage
+    env_file:
+      - /defaults.env
+    environment:
+      API_BASE_URL: http://garage:3903
+      API_ADMIN_KEY: ${GARAGE_ADMIN_TOKEN}
+      S3_ENDPOINT_URL: http://garage:3900
+      S3_REGION: garage
+    networks:
+      traefik: {}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.garage-webui.entrypoints=websecure"
+      - "traefik.http.routers.garage-webui.rule=Host(`garage.${DOMAIN_NAME}`)"
+      - "traefik.http.routers.garage-webui.tls=true"
+      - "traefik.http.routers.garage-webui.middlewares=chain-forwardauth@docker"
+      - "traefik.http.routers.garage-webui.service=garage-webui"
+      - "traefik.http.services.garage-webui.loadbalancer.server.port=3909"
 configs:
   garage_toml:
     content: |
