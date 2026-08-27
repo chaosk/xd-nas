@@ -59,12 +59,14 @@ services:
       ## Traefik Interface
       # HTTP Routers
       - "traefik.http.routers.traefik-rtr.entrypoints=websecure"
-      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.${DOMAIN_NAME}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.traefik-rtr.rule=Host(`traefik.${DOMAIN_NAME}`)"
       - "traefik.http.routers.traefik-rtr.tls=true"
       # Certificate generation for the entire server is made here
       - "traefik.http.routers.traefik-rtr.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik-rtr.tls.domains[0].main=${DOMAIN_NAME}"
       - "traefik.http.routers.traefik-rtr.tls.domains[0].sans=*.${DOMAIN_NAME}"
+      # Auth first, then redirect bare / → /dashboard/ (api@internal paths stay under /dashboard and /api)
+      - "traefik.http.routers.traefik-rtr.middlewares=chain-forwardauth,dashboard-root-redirect"
       # API service
       - "traefik.http.routers.traefik-rtr.service=api@internal"
       ## Healthcheck/ping
@@ -75,6 +77,9 @@ services:
       - "traefik.http.middlewares.chain-forwardauth.chain.middlewares=secureheaders-mw,authentik-mw" # ratelimit-mw,compress-mw
       - "traefik.http.middlewares.chain-forwardauth-plex.chain.middlewares=secureheaders-mw,authentik-plex-mw"
       - "traefik.http.middlewares.chain-noauth.chain.middlewares=secureheaders-mw"
+      - "traefik.http.middlewares.dashboard-root-redirect.redirectregex.regex=^https://([^/]+)/?$$"
+      - "traefik.http.middlewares.dashboard-root-redirect.redirectregex.replacement=https://$${1}/dashboard/"
+      - "traefik.http.middlewares.dashboard-root-redirect.redirectregex.permanent=true"
       ## Middlewares definition
       ## Authentik (plex auth) - Cookie generation directly in authentik + allows basic auth login with the Authorization header
       - "traefik.http.middlewares.authentik-plex-mw.forwardauth.address=https://authentik.net.ecksd.ee/outpost.goauthentik.io/auth/traefik"
