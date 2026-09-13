@@ -1,7 +1,7 @@
 version: "3.9"
 services:
   traefik:
-    image: traefik:latest
+    image: traefik:v3.7.12
     container_name: traefik
     depends_on:
       - docker-socket-traefik
@@ -128,7 +128,8 @@ services:
     networks:
       - docker-socket-traefik
   docker-socket-logrotate:
-    image: ghcr.io/knrdl/docker-socket-protector:latest
+    # Upstream publishes only :latest; pin by digest for immutability.
+    image: ghcr.io/knrdl/docker-socket-protector@sha256:56b6365c36e55b40fd665937fae7844036112825941565f8c67509d4cb961d73
     read_only: true
     cap_drop: [ all ]
     volumes:
@@ -139,7 +140,8 @@ services:
       - LOG_REQUESTS=false
       - PROFILE=traefik-swarm
   logrotate:
-    image: vegardit/traefik-logrotate:latest
+    # Upstream publishes only :latest; pin by digest for immutability.
+    image: vegardit/traefik-logrotate@sha256:9bf9ebc3988268515bc50fd5ddfb18aea992e385222b4766a9e70ac0ccdb8ddc
     volumes:
       - ${DATA_DIR}/traefik/logs:/var/log/traefik:rw
     env_file:
